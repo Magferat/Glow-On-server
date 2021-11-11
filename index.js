@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1rrt8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-// console.log(uri)
+console.log(uri)
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
@@ -24,6 +24,7 @@ async function run() {
         const database = client.db("SkincareAndCo");
         const productsCollection = database.collection("products");
         const orderCollection = database.collection("orders");
+        const usersCollection = database.collection("users");
 
         // Post API 
         app.post('/products', async (req, res) => {
@@ -71,7 +72,41 @@ async function run() {
             console.log(email)
         })
 
-        //-------delete -------
+        // Store user's Data 
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            console.log(result);
+            res.json(result);
+        });
+        //make users api
+        app.put('/users', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const options = { upsert: true };
+            const updateDoc = { $set: user };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+        // Make admin api 
+        app.put('/users/admin', async (req, res) => {
+            const user = req.body;
+            const filter = { email: user.email };
+            const updateDoc = { $set: { role: 'admin' } };
+            const result = await usersCollection.updateOne(filter, updateDoc);
+            res.json(result);
+        })
+
+
+
+        //<-------Delete ------->
+        //Get Single Order
+        app.get('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const item = await orderCollection.findOne(query);
+            res.send(item);
+        })
         app.delete('/orders/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -80,14 +115,13 @@ async function run() {
             res.json(result);
 
         })
+
+
+
+
+
         // //   UPDATE API
-        //Get Single Order
-        app.get('/orders/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const item = await orderCollection.findOne(query);
-            res.send(item);
-        })
+
         // app.put('/orders/:id', async (req, res) => {
         //     const id = req.params.id;
         //     // const updatedStatus = req.body;
