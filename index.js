@@ -97,7 +97,17 @@ async function run() {
             res.json(result);
         })
 
-
+        // Find Admin 
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const user = await usersCollection.findOne(query);
+            let isAdmin = false;
+            if (user?.role === 'admin') {
+                isAdmin = true;
+            }
+            res.json({ admin: isAdmin });
+        })
 
         //<-------Delete ------->
         //Get Single Order
@@ -112,6 +122,14 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             console.log('Order Deleted', id)
+            res.json(result);
+
+        })
+        // Delete Products 
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(query);
             res.json(result);
 
         })
